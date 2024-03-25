@@ -54,6 +54,18 @@ in
     ## ```
     #@ String -> Bool
     is-linux = hasInfix "linux";
+    
+    ## Check whether a named system is Android.
+    ## Example Usage:
+    ## ```nix
+    ## is-linux "x86_64-linux"
+    ## ```
+    ## Result:
+    ## ```nix
+    ## false
+    ## ```
+    #@ String -> Bool
+    is-droid = hasInfix "droid";
 
     ## Check whether a named system is virtual.
     ## Example Usage:
@@ -164,11 +176,24 @@ in
                 ../../modules/nixos/user/default.nix
               ];
             });
+        nixOnDroid-system-builder = args:
+          assert assertMsg (user-inputs ? nixOnDroid) "In order to create nix on droid systems, you must include `nixOnDroid` as a flake input.";
+          user-inputs.nixOnDroid.lib.nixOnDroid
+            ((builtins.removeAttrs args [ "system" "modules" ]) // {
+              specialArgs = args.specialArgs // {
+                format = "nixOnDroid";
+              };
+              modules = args.modules ++ [
+                ../../modules/nixos/user/default.nix
+              ];
+            });
       in
       if virtual-system-type != "" then
         virtual-system-builder
       else if is-darwin target then
         darwin-system-builder
+      else if is-droid target then
+        nixOnDroid-system-builder
       else
         linux-system-builder;
 
@@ -190,6 +215,8 @@ in
         "${virtual-system-type}Configurations"
       else if is-darwin target then
         "darwinConfigurations"
+      else if is-droid target then
+        "nixOnDroidConfigurations"
       else
         "nixosConfigurations";
 
@@ -209,6 +236,8 @@ in
       in
       if virtual-system-type != "" then
         builtins.replaceStrings [ virtual-system-type ] [ "linux" ] target
+      else if is-droid target then
+        builtins.replaceStrings [ "droid" ] [ "linux" ] target
       else
         target;
 
