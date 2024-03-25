@@ -180,9 +180,7 @@ in
           assert assertMsg (user-inputs ? nix-on-droid) "In order to create nix on droid systems, you must include `nix-on-droid` as a flake input.";
           user-inputs.nix-on-droid.lib.nixOnDroidConfiguration
             ((builtins.removeAttrs args [ "system" "modules" ]) // {
-              modules = args.modules ++ [
-                ../../modules/nixos/user/default.nix
-              ];
+              modules = args.modules;
             });
       in
       if virtual-system-type != "" then
